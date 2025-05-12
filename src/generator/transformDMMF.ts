@@ -30,8 +30,9 @@ export default function transformDMMF(
   { includeRelationFields }: OptionsForTransformDMMF
 ): DMMFDocument {
   if (!includeRelationFields) {
-    dmmf.datamodel.models = dmmf.datamodel.models.map((model) => {
-      model.fields = model.fields.filter((field) => !field.relationName);
+    const newdmf: any = JSON.parse(JSON.stringify(dmmf));
+    newdmf.datamodel.models = newdmf.datamodel.models.map((model: any) => {
+      model.fields = model.fields.filter((field: any) => !field.relationName);
       return model;
     });
   }

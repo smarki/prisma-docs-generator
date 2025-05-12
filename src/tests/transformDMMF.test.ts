@@ -73,19 +73,6 @@ describe('transformDMMF', () => {
       includeRelationFields: false,
     });
 
-    expect(transformedDmmf).toMatchObject({
-      datamodel: {
-        models: [
-          {
-            name: 'User',
-            fields: [{ name: 'id' }, { name: 'name' }, { name: 'otherField' }],
-          },
-          {
-            name: 'Post',
-            fields: [{ name: 'id' }, { name: 'title' }, { name: 'userId' }],
-          },
-        ],
-      },
-    });
+    expect(transformedDmmf).toMatchSnapshot();
   });
 });

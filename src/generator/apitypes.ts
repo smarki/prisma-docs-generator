@@ -1,6 +1,6 @@
 import { Generatable, isScalarType } from './helpers';
 import { DMMFDocument } from './transformDMMF';
-import { DMMF } from '@prisma/generator-helper';
+import * as DMMF from '@prisma/dmmf';
 
 type TypesGeneratorStructure = {
   inputTypes: TGType[];
@@ -16,7 +16,7 @@ type TGType = {
 
 type TGTypeField = {
   name: string;
-  type: DMMF.SchemaArgInputType[];
+  type: DMMF.InputTypeRef[];
   nullable: boolean;
 };
 
@@ -58,8 +58,8 @@ class TypesGenerator implements Generatable<TypesGeneratorStructure> {
     return `
       <div>
         <h3 class="mb-2 text-xl text-black dark:text-white" id="type-${kind}-${type.name}">${
-      type.name
-    }</h3>
+          type.name
+        }</h3>
         <table class="table-auto">
           <thead>
             <tr>
@@ -104,14 +104,18 @@ class TypesGenerator implements Generatable<TypesGeneratorStructure> {
   }
 
   getInputTypes(dmmfInputType: DMMF.InputType[]): TGType[] {
-    return dmmfInputType.map((inputType) => ({
-      name: inputType.name,
-      fields: inputType.fields.map((ip) => ({
-        name: ip.name,
-        nullable: ip.isNullable,
-        type: ip.inputTypes,
+    return [
+      ...dmmfInputType.map((inputType) => ({
+        name: inputType.name,
+        fields: [
+          ...inputType.fields.map((ip) => ({
+            name: ip.name,
+            nullable: ip.isNullable,
+            type: [...ip.inputTypes],
+          })),
+        ],
       })),
-    }));
+    ];
   }
 
   getOutputTypes(dmmfOutputTypes: DMMF.OutputType[]): TGType[] {
@@ -124,8 +128,8 @@ class TypesGenerator implements Generatable<TypesGeneratorStructure> {
         type: [
           {
             isList: op.outputType.isList,
-            type: op.outputType.type as string,
-            location: op.outputType.location,
+            type: op.outputType.type as any,
+            location: op.outputType.location as any,
           },
         ],
       })),
@@ -134,7 +138,7 @@ class TypesGenerator implements Generatable<TypesGeneratorStructure> {
 
   getData(d: DMMFDocument) {
     return {
-      inputTypes: this.getInputTypes(d.schema.inputObjectTypes.prisma),
+      inputTypes: this.getInputTypes([...d.schema.inputObjectTypes.prisma]),
       outputTypes: this.getOutputTypes([
         ...d.schema.outputObjectTypes.model,
         ...d.schema.outputObjectTypes.prisma.filter(
