@@ -1,4 +1,4 @@
-import { DMMF as ExternalDMMF } from '@prisma/generator-helper';
+import * as ExternalDMMF from '@prisma/dmmf';
 
 export function lowerCase(name: string): string {
   return name.substring(0, 1).toLowerCase() + name.substring(1);
@@ -22,18 +22,16 @@ export type DMMFDocument = Omit<ExternalDMMF.Document, 'mappings'> & {
 };
 
 type OptionsForTransformDMMF = {
-  includeRelationFields: boolean
-}
+  includeRelationFields: boolean;
+};
 
 export default function transformDMMF(
   dmmf: ExternalDMMF.Document,
   { includeRelationFields }: OptionsForTransformDMMF
 ): DMMFDocument {
   if (!includeRelationFields) {
-    dmmf.datamodel.models = dmmf.datamodel.models.map(model => {
-      model.fields = model.fields.filter(
-        field => !field.relationName
-      );
+    dmmf.datamodel.models = dmmf.datamodel.models.map((model) => {
+      model.fields = model.fields.filter((field) => !field.relationName);
       return model;
     });
   }

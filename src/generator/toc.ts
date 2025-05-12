@@ -135,7 +135,7 @@ export default class TOCGenerator implements Generatable<TOCStructure> {
 
   getData(d: DMMFDocument) {
     return {
-      models: this.getModels(d.datamodel.models, d.mappings),
+      models: this.getModels([...d.datamodel.models], d.mappings),
       types: this.getTypes(d.schema),
     };
   }

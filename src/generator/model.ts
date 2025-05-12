@@ -1,5 +1,5 @@
 import { Generatable, capitalize } from './helpers';
-import { DMMF } from '@prisma/generator-helper';
+import * as DMMF from '@prisma/dmmf';
 import { DMMFDocument, DMMFMapping } from './transformDMMF';
 import * as Prism from 'prismjs';
 import { lowerCase, isScalarType } from './helpers';
@@ -32,7 +32,7 @@ type MGModelField = {
 
 type MGModelOperationKeys = {
   name: string;
-  types: DMMF.SchemaArgInputType[];
+  types: DMMF.InputTypeRef[];
   required: boolean;
 };
 
@@ -60,7 +60,7 @@ interface FieldDefault {
   args: any[];
 }
 
-let fieldDirectiveMap = new Map<string, string>([
+const fieldDirectiveMap = new Map<string, string>([
   ['isUnique', '@unique'],
   ['isId', '@id'],
   ['hasDefaultValue', '@default'],
@@ -133,8 +133,8 @@ export default class ModelGenerator
     return `
                 <div class="mt-4">
                   <h4 id="${`model-${modelName}-${operation.name}`}" class="mb-2 text-lg font-bold dark:text-white">${
-      operation.name
-    }</h4>
+                    operation.name
+                  }</h4>
                   <p class="text-black dark:text-white">${operation.description}</p>
                   <div class="mb-2">
                     <pre
@@ -193,8 +193,6 @@ export default class ModelGenerator
   }
 
   toHTML() {
-
-
     return `
         <div class="mb-8">
           <h1 class="text-3xl text-gray-800 dark:text-white" id="models">Models</h1>
@@ -272,23 +270,29 @@ export default class ModelGenerator
   }
 
   getModelDirective(model: DMMF.Model): MGModelDirective[] {
-    let directiveValue: MGModelDirective[] = [];
+    const directiveValue: MGModelDirective[] = [];
 
     if (model.primaryKey)
-      directiveValue.push({ name: '@@id', values: model.primaryKey.fields });
+      directiveValue.push({
+        name: '@@id',
+        values: [...model.primaryKey.fields],
+      });
 
     if (model.uniqueFields.length > 0) {
       model.uniqueFields.forEach((uniqueField) => {
         directiveValue.push({
           name: '@@unique',
-          values: uniqueField,
+          values: [...uniqueField],
         });
       });
     }
 
     if (model.uniqueIndexes.length > 0) {
       model.uniqueIndexes.forEach((uniqueIndex) => {
-        directiveValue.push({ name: '@@index', values: uniqueIndex.fields });
+        directiveValue.push({
+          name: '@@index',
+          values: [...uniqueIndex.fields],
+        });
       });
     }
     return directiveValue;
@@ -300,7 +304,7 @@ export default class ModelGenerator
         name: field.name,
         type: this.getFieldType(field),
         bareTypeName: field.type,
-        documentation: (field as any).documentation,
+        documentation: field.documentation,
         directives: this.getFieldDirectives(field),
         required: field.isRequired,
       };
@@ -323,7 +327,7 @@ export default class ModelGenerator
       Boolean(v)
     );
 
-    let directives: string[] = [];
+    const directives: string[] = [];
 
     filteredEntries.forEach(([k]) => {
       const mappedDirectiveValue = fieldDirectiveMap.get(k);
@@ -338,11 +342,11 @@ export default class ModelGenerator
             directives.push(`${mappedDirectiveValue}(${field.default})`);
           }
 
-          if(Array.isArray(field.default)) {
-            directives.push(`${mappedDirectiveValue}([${field.default.toString()}])`)
-          }
-
-          else if (typeof field.default === 'object') {
+          if (Array.isArray(field.default)) {
+            directives.push(
+              `${mappedDirectiveValue}([${field.default.toString()}])`
+            );
+          } else if (typeof field.default === 'object') {
             // Output of this template is, for example, @default(now())
             directives.push(
               `${mappedDirectiveValue}(${
@@ -350,7 +354,6 @@ export default class ModelGenerator
               }(${(field.default as FieldDefault).args.join(',')}))`
             );
           }
-
         } else {
           directives.push(mappedDirectiveValue);
         }
@@ -369,9 +372,9 @@ export default class ModelGenerator
       throw new Error(`No operation mapping found for model: ${model.name}`);
     }
     const modelOps = Object.entries(mappings).filter(
-      ([map, _val]) => map !== 'model'
+      ([map]) => map !== 'model'
     );
-    let ops: MGModelOperation[] = [];
+    const ops: MGModelOperation[] = [];
     modelOps.forEach(([op, val]) => {
       const singular = capitalize(model.name);
       const plural = capitalize(singular);
@@ -397,7 +400,7 @@ const ${singular} = await ${method}({
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {
@@ -428,7 +431,7 @@ const { count } = await ${method}({
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {
@@ -458,7 +461,7 @@ const ${singular} = await ${method}({
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {
@@ -487,7 +490,7 @@ const ${plural} = await ${method}({ take: 10 })
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {
@@ -518,7 +521,7 @@ const ${lowerCase(singular)} = await ${method}({
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {
@@ -550,7 +553,7 @@ const ${lowerCase(singular)} = await ${method}({
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {
@@ -585,7 +588,7 @@ const ${lowerCase(singular)} = await ${method}({
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {
@@ -618,7 +621,7 @@ const ${lowerCase(singular)} = await ${method}({
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {
@@ -654,7 +657,7 @@ const ${lowerCase(singular)} = await ${method}({
             ),
             opKeys: field?.args.map((a) => ({
               name: a.name,
-              types: a.inputTypes,
+              types: [...a.inputTypes],
               required: a.isRequired,
             })),
             output: {

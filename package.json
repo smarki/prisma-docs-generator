@@ -30,6 +30,7 @@
     "url": "https://github.com/pantharshit00/prisma-docs-generator/issues"
   },
   "dependencies": {
+    "@prisma/dmmf": "^6.7.0",
     "@prisma/generator-helper": "^6.7.0",
     "@prisma/internals": "^6.7.0",
     "express": "^5.1.0",
